@@ -90,7 +90,9 @@ static inline void spm_copy_to_local_id(dram_addr_t dram_pa, spm_offset_t local_
   //   printf("Core %d SPM write back id=%llu addr=%016llx\n", hartid, id, dram_pa);
   //   unlock_print();
   // }
-  if (hartid == 0){
+  lock_dma();
+  // TODO: SPM Lock
+  if (hartid % 2 == 0){
     SPM_DRAM_ADDRESS  = dram_pa;
     SPM_LOCAL_ADDRESS = local_off;   /* SPM_MEM_BASE からの相対(バイト) */
     // SPM_SIZE_REG      = size;
@@ -98,6 +100,7 @@ static inline void spm_copy_to_local_id(dram_addr_t dram_pa, spm_offset_t local_
     // SPM_DESTINATION   = 1;           /* DRAM */
     SPM_ID          = id;
     SPM_START         = 1;           /* GO */
+    // spm_wait_idle();
   } else {
     SPM_DRAM_ADDRESS_2  = dram_pa;
     SPM_LOCAL_ADDRESS_2 = local_off;   /* SPM_MEM_BASE からの相対(バイト) */
@@ -105,13 +108,15 @@ static inline void spm_copy_to_local_id(dram_addr_t dram_pa, spm_offset_t local_
     // SPM_DESTINATION   = 1;           /* DRAM */
     SPM_ID_2          = id;
     SPM_START_2         = 1;           /* GO */
+    // spm_wait_idle_2();
   }
+  unlock_dma();
 }
 
 /* SPM -> DRAM */
 static inline void spm_write_back_id(spm_offset_t local_off, dram_addr_t dram_pa, dma_id_t id,int hartid) {
-  
-  if (hartid == 0){
+  lock_dma();
+  if (hartid % 2 == 0){
     SPM_DRAM_ADDRESS  = dram_pa;
     SPM_LOCAL_ADDRESS = local_off;
     // SPM_SIZE_REG      = size;
@@ -119,6 +124,7 @@ static inline void spm_write_back_id(spm_offset_t local_off, dram_addr_t dram_pa
     // SPM_DESTINATION   = 1;           /* DRAM */
     SPM_ID          = id;
     SPM_START         = 1;
+    // spm_wait_idle();
   } else {
     SPM_DRAM_ADDRESS_2  = dram_pa;
     SPM_LOCAL_ADDRESS_2 = local_off;
@@ -127,7 +133,9 @@ static inline void spm_write_back_id(spm_offset_t local_off, dram_addr_t dram_pa
     // SPM_DESTINATION   = 1;           /* DRAM */
     SPM_ID_2          = id;
     SPM_START_2         = 1;
+    // spm_wait_idle_2();
   }
+  unlock_dma();
 }
 
 /* データ窓の直接アクセス（必要なら 1/2/4 も追加） */
