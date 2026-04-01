@@ -2,7 +2,7 @@
 #define MAC_ENCODING_H
 
 /* --- 基本パラメータ --- */
-#define MAC_OPCODE 0x5b // custom-1
+#define MAC_OPCODE 0x5b // custom-2
 #define MAC_F3     0x0
 
 /* --- Funct7 定義 (Command ID) --- */
