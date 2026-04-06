@@ -2,3 +2,6 @@
 	path = spike
 	url = https://github.com/riscv-software-src/riscv-isa-sim.git
 	
+[submodule "ame_spike"]
+	path = ame_spike
+	url = https://github.com/iLiss557/ame_spike.git
