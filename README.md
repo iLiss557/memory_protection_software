@@ -49,24 +49,91 @@ Bash
 ./setup.sh
 ```
 
-## ビルドと実行
-1. spikeのビルド
+# Software-Defined AMEソフトウェアの動かした。
+
+ディレクトリ構成
+
 ```
-cd spike
-mkdir build
-cd build
-../configure
-make
+/
+├─ memory_protection_software/
+│  └─ ame_spike/
+├─ (riscv-gnu-toolchain/)
+└─ ChampSim_Spike/
 ```
 
-2. プロジェクトのコンパイルと実行
-riscv64-unknown-elf-gccを使用して、プロジェクトのソースコードをコンパイルする。
+### 準備
+
+RiscV-Toolchain (https://github.com/riscv-collab/riscv-gnu-toolchain)各種を準備してください。
+
+#### 手順
+1. MMIOデバイスを追加したspikeのビルド -> champsimのビルドに必要なライブラリファイルの生成
+2. ChampSimのビルド
+3. AMEソフトウェアのコンパイル
+4. 初期化データの用意
+5. 実行
+
+## 0. 
+このリポジトリをクローンしたら、まずspikeの差分をアップデートするために以下のコマンドを実行してください。
 ```
-cd spike_simulation
-(コンパイル)
-../spike/build/spike <binary_file>
+bash setup.sh
+```
+次にChampSimで動かすトレースファイルを(https://dpc3.compas.cs.stonybrook.edu/champsim-traces/speccpu/)からダウンロードしてください。
+riscvツールチェインのコンパイラやriscv-testに含まれているファイルを一部使うので用意してください。
+
+## 1. Spikeのビルド
+spikeをビルドします。最後のところ以外は正式なものと変わりありません。
+```
+$ cd spike
+$ mkdir build
+$ cd build
+$ ../configure
+$ make
+$ make all-spikecore 
+```
+## 2. ChampSimのビルド
+ChampSimのリポジトリに移動してください.必要なライブラリなどは公式に従ってインストールしてください。
+Makefileに先ほどビルドしたSpikeのパスをSPIKE_PREFIXへ追加してください。
+```
+$ ./config.sh champsim_config_pass.json
+$ make
+```
+エラーが出たらごめんなさい。
+
+## 3. AMEソフトウェアのコンパイル
+逐次実行アルゴリズムのファイルはvar_set_asoc_cache.cです。各種設定ファイルはconfig.hにまとめています。
+以下のコマンドでコンパイルします。
+```
+$ cd spike_simulation
+$ riscv64-unknown-elf-gcc \
+-I/path/to/rocket-tools/riscv-tests/env \
+-I/path/to/memory_protection_software/common \ 
+-I/path/to/memory_protection_software/spike_simulation/cache_extension \
+-DPREALLOCATE=1 -mcmodel=medany -static -std=gnu99 -O3 -ffast-math -fno-common -fno-builtin-printf -fno-tree-loop-distribute-patterns -march=rv64gcv \
+/path/to/memory_protection_software/common/syscalls.c \
+/path/to/memory_protection_software/common/crt.S \
+-static -nostdlib -nostartfiles -lm -lgcc \
+-T /path/to/memory_protection_software/common/test.ld \
+-I/path/to/memory_protection_software/spike_simulation/inc \
+-o tmp_.elf var_multi_core.c
 ```
 
+## 4. 初期化データの用意
+16GBとかの暗号化データとそのメタデータを毎回用意するのはとても時間がかかるので、データを暗号化して初期化した体でシミュレーションを始めています。
+```
+$ cd init_data
+$ g++ -o a.out -I/path/to/spike_simulation/inc init_image_main.cc -fopenmp
+$ ./a.out image_6.bin
+```
+これで生成した初期化イメージデータを次で、ChampSimに渡します。
+
+## 5. 実行
+ChampSimのディレクトリへ移動します。
+以下のコマンドでシミュレーションを開始します.実行命令数などはうまく調整してください。
+```
+bin/champsim -i 10000000 -w 4000000 \
+--spike_kernel /path/to/elf_file  --spike_m 65536   --spike_init_image /path/to/init_image_file \
+/path/to/trace_data_file
+```
 
 <!-- 構成
 - 64B単位の暗号化と整合性検証
