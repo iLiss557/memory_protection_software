@@ -59,13 +59,11 @@ SECTIONS
     *(.tdata)
     _tdata_end = .;
   } > RAM
-  ._t_data_end = .;
   .tbss :
   {
     *(.tbss)
     _tbss_end = .;
   } > RAM
-  _tbss_end = .;
 
   /* End of uninitalized data segement */
   _end = .;

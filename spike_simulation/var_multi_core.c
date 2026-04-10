@@ -238,7 +238,7 @@ AFTER_PATH_CHECK_AUTH:
   uint64_t start_level = 0;
   uint64_t base_addr = spm_offset_array[start_level]; // または start_level
   uint64_t major_counter = spm_ld64(base_addr);
-  uint64_t minor_idx = (request_addr / 64) % MINOR_COUNTER_COUNT; 
+  uint64_t minor_idx = (request_addr / 64) % MINOR_COUNTER_COUNT;
   uint64_t global_bit_offset = 64 + (minor_idx * MINOR_COUNTER_WIDTH);
   uint64_t word_offset_bytes = (global_bit_offset / 64) * 8;
   uint64_t local_bit_offset  = global_bit_offset % 64;
